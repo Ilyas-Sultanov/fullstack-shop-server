@@ -82,6 +82,10 @@ class CategoriesController {
             const properties: IDBProperty[] = JSON.parse(req.body.props);
             const categoryImage = req.files && (req.files as Express.Multer.File[])[0];  
 
+            // for (let i=0; i<properties.length; i+=1) {
+            //     console.log(properties[i]);
+            // }
+            
             await categoriesService.edit(categoryId, category, properties, categoryImage);
             return res.sendStatus(204);
         }

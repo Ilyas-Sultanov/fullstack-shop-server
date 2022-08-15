@@ -1,5 +1,5 @@
 import {Schema, model, SchemaTypes, SchemaType, Types, AnyObject, ValidatorProps} from 'mongoose';
-import {IProductProperty, ProductPropValue} from '../types/productProperty';
+import { FilterChoiceValue } from '../types/categoryProperty';
 
 
 export class ProductPropValueUnion extends SchemaType { // custom schema type
@@ -8,7 +8,7 @@ export class ProductPropValueUnion extends SchemaType { // custom schema type
     }
  
     // валидация типов (значения валируем там где положено - в validate)
-    cast(value: ProductPropValue) {
+    cast(value: FilterChoiceValue) {
         let isValid = true;
         if (Array.isArray(value)) {
             const elType: string | number = typeof value[0];
@@ -56,7 +56,7 @@ export const ProductPropertySchema = new Schema(
             required: true,
             validate: [
                 {
-                    validator(value: ProductPropValue) {
+                    validator(value: FilterChoiceValue) {
                         if (!isNaN(value as number)) {
                             if (value < 0 || value > 999999) {
                                 return false;
@@ -69,7 +69,7 @@ export const ProductPropertySchema = new Schema(
                     }
                 },
                 {
-                    validator(value: ProductPropValue) {
+                    validator(value: FilterChoiceValue) {
                         const v = value as string;
                         if (v.length < 1 || v.length > 75) {
                             return false

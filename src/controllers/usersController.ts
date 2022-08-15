@@ -7,9 +7,6 @@ class UsersController {
     async getUsers(req: Request, res: Response, next: NextFunction) {        
         try {
             const usersData = await userService.getUsers(req.query as usersQuery, req.originalUrl);
-            // if (usersData.data.length < 1) {
-            //     return res.json({message: 'Users not found'});
-            // }            
             return res.json(usersData);
         }
             catch (err) {
@@ -39,13 +36,8 @@ class UsersController {
                     password?:string
                 } = req.body;
 
-            const result = await userService.editUser(_id, name, email, roles, password,);
-            if (result.modifiedCount !== 1) {
-                throw ApiError.internal('Ошибка во время редактирования пользователя');
-            }
-            else {
-                return res.sendStatus(200);
-            }
+            await userService.editUser(_id, name, email, roles, password);
+            return res.sendStatus(204);
         }
             catch (err) {
             next(err);
@@ -55,13 +47,8 @@ class UsersController {
     async deleteOneUser(req: Request, res: Response, next: NextFunction) {
         try {
             const _id = req.params._id;
-            const result = await userService.deleteOneUser(_id);
-            if (result.deletedCount !== 1) {
-                throw ApiError.internal('Ошибка во время удаления пользователя');
-            }     
-            else {
-                return res.sendStatus(200);
-            }
+            await userService.deleteOneUser(_id);
+            return res.sendStatus(204);
         }
             catch (err) {
             next(err);

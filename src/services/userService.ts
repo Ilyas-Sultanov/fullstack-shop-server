@@ -1,15 +1,14 @@
 import UserModel from "../models/User";
+import ShoppingCartModel from "../models/ShoppingCart";
 // import UserDto from "../dtos/userDto";
 import { IUser, usersQuery } from '../types/user';
-import { FilterQuery, QuerySelector, UpdateQuery, QueryOptions, Condition, mongo, Mongoose, Model } from 'mongoose';
+import { FilterQuery, QuerySelector, UpdateQuery, QueryOptions, Condition, mongo, Mongoose, Model, startSession } from 'mongoose';
 import paginatedResults from "../helpers/paginatedResults";
 import cleanObject from '../helpers/cleanObject';
+import ApiError from "../exceptions/ApiError";
 
 class UserService {
     async getUsers(query: usersQuery, originalUrl: string) {
-        console.log(query);
-        
-
         /**
          * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          * Исправить!
@@ -61,7 +60,10 @@ class UserService {
         const result = await UserModel.findOne(
             {_id: _id},
             '_id name email roles isActivated createdAt updatedAt',
-            {lean: true}
+            {
+                populate: 'shoppingCart, orders',
+                lean: true,
+            }
         );
         return result;
     }
@@ -77,12 +79,27 @@ class UserService {
             {_id: _id},
             update,
         );
-        return result;
+        if (result.modifiedCount !== 1) {
+            throw ApiError.internal('Ошибка во время редактирования пользователя.');
+        }
     }
 
     async deleteOneUser(_id: string) {
-        const result = await UserModel.deleteOne({_id: _id});
-        return result;
+        const session = await startSession();
+        await session.withTransaction(
+            async function() {
+                const result1 = await UserModel.deleteOne({_id: _id});
+                if (result1.deletedCount !== 1) {
+                    throw ApiError.internal('Пользователь не найден.');
+                }     
+
+                const result2 = await ShoppingCartModel.deleteOne({userId: _id});
+                if (result2.deletedCount !== 1) {
+                    throw ApiError.internal('Корзина пользователя не найдена.');
+                }   
+            }
+        );
+        session.endSession();
     }
 }
 

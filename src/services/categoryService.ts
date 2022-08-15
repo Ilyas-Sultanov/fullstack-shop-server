@@ -6,7 +6,7 @@ import categoryPropertyService from './categoryPropertyService';
 import { CategoryRootModel, CategoryBranchModel, CategoryLeafModel} from '../models/Category';
 import CategoryPropertyModel from '../models/CategoryProperty';
 import Trees from '../helpers/Trees';
-import { ICreateCategoryObj, IDBCategory, ICategiryTree } from '../types/category';
+import { ICreateCategoryObj, IDBCategory, ICategoryTree } from '../types/category';
 import { ICreatePropertyObj, IDBProperty } from '../types/categoryProperty';
 import ApiError from '../exceptions/ApiError';
 import ProductModel from '../models/Product';
@@ -83,16 +83,16 @@ class CategoryService {
 
 
     public async getAll() {
-        const categories = await CategoryRootModel.find({}, '', {lean: true});
+        const categories = await CategoryRootModel.find({}, '', {populate: 'properties brands', lean: true});
         const cats = Trees.createTrees<IDBCategory>(categories);
         return cats;
     }
 
 
     public async getOne(categoryId: string) {
-        const allCategories: IDBCategory[] = await CategoryRootModel.find({}, '', {populate: 'properties', lean: true});
+        const allCategories: IDBCategory[] = await CategoryRootModel.find({}, '', {populate: 'properties brands', lean: true});
         const trees = Trees.createTrees<IDBCategory>(allCategories);
-        const category = Trees.findTree(categoryId, trees) as ICategiryTree | null;
+        const category = Trees.findTree(categoryId, trees) as ICategoryTree | null;
         if (!category) {
             throw ApiError.badRequest('Category not found');
         }
@@ -109,7 +109,7 @@ class CategoryService {
 
 
     public async edit(categoryId: string, category: IDBCategory, properties: IDBProperty[], categoryImage?: Express.Multer.File) {
-        const targetCat = await this.getOne(categoryId) as null | ICategiryTree;    
+        const targetCat = await this.getOne(categoryId) as null | ICategoryTree;    
         if (targetCat) {
             // если с фронта пришла картинка, то добавляем поле category.img с url для картинки
             const imgPath = (() => {
@@ -167,14 +167,14 @@ class CategoryService {
          */
         const allCategories = await CategoryRootModel.find({}, '', {lean: true});
         const trees = Trees.createTrees(allCategories);
-        const category = Trees.findTree(categoryId, trees) as ICategiryTree;
+        const category = Trees.findTree(categoryId, trees) as ICategoryTree;
         if (category) {
             const categoryIdsToDelete: string[] = [];
             const publicDirPath = resolve(`${__dirname}/../public`);
             // console.log(resolve()); // D:\WEB\myProgects\shop\server
 
             getValues(category);
-            function getValues(category: ICategiryTree) {
+            function getValues(category: ICategoryTree) {
                 categoryIdsToDelete.push(category._id.toString());
                 if (category.img) { 
                     const idx = category.img.lastIndexOf('uploads');
@@ -210,7 +210,7 @@ class CategoryService {
     }
 
 
-    protected async handleRoot(targetCat: ICategiryTree, category: IDBCategory) {
+    protected async handleRoot(targetCat: ICategoryTree, category: IDBCategory) {
         if (targetCat.status === 'root') { // редактируем root категорию
             console.log('root -> root');
             await CategoryRootModel.replaceOne({_id: targetCat._id}, category);
@@ -228,7 +228,7 @@ class CategoryService {
             const session = await mongoose.startSession();
             await session.withTransaction(async () => {
                 if (targetCat.properties && targetCat.properties.length > 0) {
-                    const ids = targetCat.properties.map((prop) => prop as string);
+                    const ids = targetCat.properties.map((prop: IDBProperty) => prop._id);
                     await CategoryPropertyModel.deleteMany( // Удаляем пропсы этой категории
                         {_id: {$in: ids}}, 
                         {session}
@@ -248,7 +248,7 @@ class CategoryService {
     }
 
 
-    protected async handleBranch(targetCat: ICategiryTree, category: IDBCategory) {
+    protected async handleBranch(targetCat: ICategoryTree, category: IDBCategory) {
         if (targetCat.status === 'root') { // конвертируем root категорию в branch
             // console.log('root -> branch');
             await CategoryRootModel.replaceOne(
@@ -273,7 +273,7 @@ class CategoryService {
             const session = await mongoose.startSession();
             await session.withTransaction(async () => {
                 if (targetCat.properties && targetCat.properties.length > 0) {
-                    const ids = targetCat.properties.map((prop) => prop as string);
+                    const ids = targetCat.properties.map((prop: IDBProperty) => prop._id);
                     await CategoryPropertyModel.deleteMany( // Удаляем пропсы этой категории
                         {_id: {$in: ids}}, 
                         {session}
@@ -289,7 +289,9 @@ class CategoryService {
     }
 
 
-    protected async handleLeaf(targetCat: ICategiryTree, category: IDBCategory, properties: IDBProperty[]) {
+    protected async handleLeaf(targetCat: ICategoryTree, category: IDBCategory, properties: IDBProperty[]) {
+        // console.log(properties);
+        
         if (targetCat.status === 'root') { // конвертируем root категорию в leaf
             // console.log('root -> leaf');
             const session = await mongoose.startSession();
@@ -380,6 +382,8 @@ class CategoryService {
                  */
                 for (let i=0; i < properties.length; i+=1) {
                     const prop = properties[i];
+                    // console.log(prop);
+                    
                     if (prop._id) {
                         // console.log('replace');
                         toReplace.push({
@@ -420,9 +424,10 @@ class CategoryService {
                  */
                 const categoryPropsAfterEdit = await CategoryPropertyModel.find(
                     {categoryId: targetCat._id},
-                    '_id, input',
+                    '_id, input, inputSettings',
                     {lean: true, session: session}
                 );                
+                
                 const categoryPropIds: string[] = categoryPropsAfterEdit.map((prop) => prop._id.toString());
                
                
@@ -472,11 +477,12 @@ class CategoryService {
                         // ---------------------
 
                         const newProps = categoryPropsAfterEdit.filter((prop) => idsToAdd.includes(prop._id.toString()));
+                        
                         for (let n=0; n<newProps.length; n+=1) { 
                             products[i].properties.push({ // добавляем новые пропсы из категории в продукты
                                 categoryPropId: newProps[n]._id,
-                                value: newProps[n].input.inputType === 'String' ? 'null' :
-                                    newProps[n].input.inputType === 'Number' ? 0 : false // false когда newProps[n].input.inputType === 'Boolean'
+                                value: newProps[n].inputSettings.inputType === 'String' ? 'null' :
+                                    newProps[n].inputSettings.inputType === 'Number' ? 0 : false // false когда newProps[n].input.inputType === 'Boolean'
                             });
                         }
 

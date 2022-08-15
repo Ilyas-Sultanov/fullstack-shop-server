@@ -1,3 +1,6 @@
+import { PopulatedDoc, Document } from "mongoose"
+import { IDBOrder } from "./order"
+import { IShoppingCart } from "./shoppingCart"
 import { IPaginationQuery } from "./types"
 
 export interface usersQuery extends IPaginationQuery {
@@ -19,8 +22,8 @@ export interface IUser {
     password: string
     roles: string[]
     isActivated: boolean
-    link: string | null
-    expireLink: Date | null
+    shoppingCart: PopulatedDoc<IShoppingCart & Document>
+    orders: Array<PopulatedDoc<IDBOrder & Document>>
 }
   
 export interface IUserDto {
@@ -29,4 +32,6 @@ export interface IUserDto {
     email: string
     roles: string[]
     isActivated: boolean
+    shoppingCart: PopulatedDoc<IShoppingCart & Document>
+    orders: Array<PopulatedDoc<IDBOrder & Document>>
 }

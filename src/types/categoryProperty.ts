@@ -1,11 +1,16 @@
-export type PropertyInputType = {
-    inputType: 'String' | 'Number' | 'Boolean', 
+export type PropertyInputType = 'String' | 'Number' | 'Boolean';
+
+export type PropertyInputSettings = {
+    inputType: PropertyInputType, 
     isMultiselect: boolean
 };
 
-export type FilterChoicesType = 'equal' | 'range';
+export type FilterChoiceValue = number | string | boolean | Array<string>;
 
-export type FilterChoiceValue = [number | undefined, number | undefined] | number | string;
+export type FilterChoice = {
+    name: string
+    value: FilterChoiceValue
+}
   
 export interface ICreatePropertyObj {
     categoryId: string,
@@ -13,12 +18,8 @@ export interface ICreatePropertyObj {
     required: boolean
     filterable: boolean
     unit?: string
-    input: PropertyInputType
-    filterChoices?: {
-        name: string
-        value: FilterChoiceValue
-        type: FilterChoicesType
-    }[]
+    inputSettings: PropertyInputSettings
+    filterChoices?: Array<FilterChoice>
 }
   
 export interface IDBProperty extends ICreatePropertyObj {

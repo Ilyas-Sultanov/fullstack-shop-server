@@ -69,7 +69,8 @@ class ProductController {
 
     async getHighestPrice(req: Request, res: Response, next: NextFunction) {
         try {
-            const highestPrice = await productsService.getHighestPrice();
+            const categoryId = req.query.categoryId as string | undefined;
+            const highestPrice = await productsService.getHighestPrice(categoryId);
             if (highestPrice) return res.json(highestPrice);
             return res.json('Not found');
         }

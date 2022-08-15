@@ -34,6 +34,14 @@ async function paginatedResults<T>(
         projection,
         options
     )   
+
+    // results.data = await model.find(
+    //     {
+    //         $and: [{}, {}]
+    //     },
+    //     projection,
+    //     options
+    // )   
     
     return results;
 }

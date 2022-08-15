@@ -1,7 +1,6 @@
 import {Schema, model, Types, SchemaTypes, ValidatorProps} from 'mongoose';
 import {IDBProduct} from '../types/product';
 import {ProductPropertySchema} from './ProductProperty'
-import {ProductPropValue, IProductProperty} from '../types/productProperty';
 
 const ProductSchema = new Schema(
     {
@@ -34,7 +33,7 @@ const ProductSchema = new Schema(
         brand: {
             type: Types.ObjectId,
             ref: 'brands',
-            required:  [true, 'categoryId is required'],
+            required:  [true, 'brand is required'],
         },
         price: {
             type: Number,
@@ -55,6 +54,10 @@ const ProductSchema = new Schema(
             max: [999999, 'The value of the quantity field must be 1 - 999999'],
             required: true,
             default: 1
+        },
+        ordered: { // Количество заказанных, но не оплаченных
+            type: Number,
+            default: 0,
         },
         rating: {
             type: Number,

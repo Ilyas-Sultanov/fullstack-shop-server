@@ -1,7 +1,8 @@
 import {Schema, model, Types} from 'mongoose';
 import { IDBCategory } from 'src/types/category';
 import CategoryPropertyModel from './CategoryProperty';
-import ProductModel from './Product';
+// import ProductModel from './Product';
+import BrandModel from './brand';
 
 const CategoryRootSchema = new Schema(
     {
@@ -61,10 +62,17 @@ const CategoryLeafModel = CategoryRootModel.discriminator(
                     default: [],
                 }
             ],
-            products: [
+            // products: [
+            //     {
+            //         type: Types.ObjectId,
+            //         ref: ProductModel,
+            //         default: [],
+            //     }
+            // ],
+            brands: [
                 {
                     type: Types.ObjectId,
-                    ref: ProductModel,
+                    ref: BrandModel,
                     default: [],
                 }
             ],

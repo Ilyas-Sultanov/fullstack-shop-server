@@ -1,16 +1,10 @@
 import LinkModel from "../models/Link";
 
-interface ILinkObj {
-    value: string
-    userId: string
-    newPassword?: string
-}
-
 class LinkService {
-    async createLink(link: string, userId: string) {
+    async createLink(userId: string, link: string) {
         await LinkModel.create({
-            value: link,
             userId: userId,
+            value: link,
         });
     }
 

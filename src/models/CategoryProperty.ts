@@ -50,13 +50,19 @@ const CategoryPropertySchema = new Schema({
                     {
                         validator(value: FilterChoiceValue) {
                             const v = value as string;
-                            if (v.length < 1 || v.length > 75) {
+                            // if (v.length < 1 || v.length > 75) {
+                            //     return false
+                            // }
+                            if (v.length > 75) {
                                 return false
                             }
                             return true;
                         },
+                        // message({path, value}: ValidatorProps) {
+                        //     return `String length ${value} is out of range 1 - 75`;
+                        // }
                         message({path, value}: ValidatorProps) {
-                            return `String length ${value} is out of range 1 - 75`;
+                            return `${value} is longer than 75 characters`;
                         }
                     },
                     {

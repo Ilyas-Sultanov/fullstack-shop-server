@@ -1,5 +1,7 @@
+import { PopulatedDoc, Document } from "mongoose";
 import { IDBProperty } from "./categoryProperty";
 import { IDBProduct } from './product';
+import { IBrand } from "./types";
 
 export type CategoryStatusType = 'root' | 'branch' | 'leaf';
 export type CreateCatRequestBodyType = {category: ICreateCategoryObj, categoryImage: string, properties: IDBProperty[]};
@@ -10,7 +12,8 @@ export interface ICreateCategoryObj {
     name: string
     status: CategoryStatusType
     description: string
-    properties?: string[]
+    properties?: Array<string>
+    brands?: Array<string>
 }
 
   
@@ -21,24 +24,21 @@ export interface IDBCategory {
     status: CategoryStatusType
     img?: string
     description?: string
-    properties?: string[]
-    products?: string[]
+    properties?: Array<PopulatedDoc<IDBProperty & Document>>
+    brands: Array<PopulatedDoc<IBrand & Document>>
+    // products?: string[]
 }
 
-export interface IUnit {
-    _id: string
-    value: string
-}
 
-export interface ICategiryTree {
+export interface ICategoryTree {
     _id: string
     name: string
     status: CategoryStatusType
     description?: string
     img?: string
-    properties?: IDBProperty[] | string[]
-    products?: IDBProduct[]
-    children: ICategiryTree[]
+    properties?: PopulatedDoc<IDBProperty & Document>
+    products?: Array<IDBProduct>
+    children: ICategoryTree[]
     parent?: {
         _id: string
         name: string
